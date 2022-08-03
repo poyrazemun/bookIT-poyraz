@@ -22,7 +22,7 @@ public class BookItApiUtil {
     }
 
 
-    public static void deleteStudent(String studentEmail,String studentPassword){
+    public static void deleteStudent(String studentEmail, String studentPassword) {
 
 
         //send a get request to get token with student info
@@ -31,7 +31,7 @@ public class BookItApiUtil {
         //send a get request to /api/users/me endpoint and get the id number
         int idToDelete = given().accept(ContentType.JSON)
                 .and().header("Authorization", studentToken)
-                .when().get(ConfigurationReader.getProperty("url") + "/api/users/me")
+                .when().get(Environment.BASE_URL + "/api/users/me")//environmentim oldugu icin configReader yazan yerleri environment ile degistirebilirim!!!
                 .then().statusCode(200)
                 .extract().jsonPath().getInt("id");
 
@@ -44,15 +44,46 @@ public class BookItApiUtil {
                 .delete(ConfigurationReader.getProperty("url") + "/api/students/{id}")
                 .then().statusCode(204);
 
+    }
 
+    public static String getTokenByRole(String role) {
+        //switch,if make sure you get correct user info
+        //send request/get token/ return token
+        String email, pass;
 
+        switch (role) {
 
+            case "teacher":
+                email = Environment.TEACHER_EMAIL;
+                pass = Environment.TEACHER_PASSWORD;
+                break;
+            case "student-member":
+                email = Environment.MEMBER_EMAIL;
+                pass = Environment.MEMBER_PASSWORD;
+                break;
 
+            case "student-leader":
+                email = Environment.LEADER_EMAIL;
+                pass = Environment.LEADER_PASSWORD;
+                break;
 
+            default:
+                throw new IllegalStateException("Unexpected value: " + role);
+        }
+
+        String accessToken =
+                given()
+                        .accept(ContentType.JSON)
+                        .queryParams("email",email,"password",pass)
+                        .when()
+                        .get(Environment.BASE_URL+"/sign")
+                        .then()
+                        .statusCode(200)
+                        .extract().jsonPath().getString("accessToken");
+
+        System.out.println(role+":"+accessToken);
+        return "Bearer " + accessToken;
 
 
     }
-
-
-
 }
